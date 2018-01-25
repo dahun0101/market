@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 var MongoClient = require('mongodb').MongoClient;
-var request = require('request'),
+var request = require('request');
 var cron = require('node-cron');
 
 //DB연동
@@ -14,6 +14,7 @@ db.once('open', function callback () {
 });
 
 var marketSchema = new mongoose.Schema({
+	"name": String,
 	"date": Number,
 	"high": Number,
 	"low": Number,
