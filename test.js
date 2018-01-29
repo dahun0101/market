@@ -9,21 +9,19 @@ var timestamp = Math.floor(Date.now()/1000);
 
 /*mongodb를 nodejs와 연동한다.*/
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
-mongoose.connect('mongodb://localhost:27017/coinsdaq');
+mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaq?ssl=true&authSource=admin');
+//mongoose.connect('mongodb://localhost:27017/coinsdaq');
+
 var db = mongoose.connection;
 
-
-
 // we get notified if error occurs
-db.on('error', console.error.bind(console, 'connection error:'));
+db.on('error', console.error.bind(console, 'DB connection error:'));
 
 // executed when the connection opens
 db.once('open', function callback () {
     // add your code here when opening
-      console.log("connection open");
+      console.log("DB connection open");
 });
-
-
 
 
 var ticker_schema = new mongoose.Schema({
@@ -59,16 +57,12 @@ var usdt_dash = mongoose.model('usdt_dash', ticker_schema, 'usdt_dash');
 
 
 poloniex.subscribe('ticker');
-//poloniex.subscribe('BTC_ETH');
 poloniex.on('message', (channelName, data, seq) => {
  	if (channelName === 'ticker' && data.currencyPair === 'USDT_BTC')
  	{
- 		//db.collection("USDT_BTC").save({Sname:'pol'});
- 		db.collection("USDT_BTC").save({Sname:'pol',date:timestamp,data},function(err,res){
+ 		db.collection("USDT_BTC").save({Sname:'pol', date:timestamp, data},function(err,res){
  			if(err) throw err;
  		});
- 		
-		
 	}
 	else if(channelName === 'ticker' && data.currencyPair === 'USDT_STR')
 	{
