@@ -4,20 +4,22 @@ var mongoose = require('mongoose');
 var Poloniex = require('poloniex-api-node');
 
 /* GLOBAL VARIABLE */
-var timestamp = Math.floor(Date.now()/1000); //CURRENT UNIX TIME
+var timestamp = Math.floor(Date.now()); //CURRENT UNIX TIME
 
 /* DB configuration */
-var url = "mongodb://localhost:27017/";
+var url = "mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/data?ssl=true&authSource=admin";
 
 /* MongoDB connection */
+
 MongoClient.connect(url, function(err, db) {
+
 	if (err) throw err;
 	console.log("MongoClient : Database connected!");
 
-	var dbo = db.db("mydb");
+	var dbo = db.db("data");
 
 /* Mongoose connection */
-mongoose.connect('mongodb://localhost:27017/mydb');
+mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/data?ssl=true&authSource=admin');
 
 var db = mongoose.connection;
 
@@ -27,22 +29,19 @@ db.once('open', function callback () {
 });
 
 /* Config Schema */
-//Data Schema
 var data = new mongoose.Schema({
 	"Sname" : String,
 	"date" : Date,
 	"last" : Number,
 	"lowestAsk" : Number,
 	"highestBid" : Number,
-	"percentChange" : Number,
+	"percentChange" : Number,	
 	"baseVolume" : Number,
-	"quoteVolume" : Number
- 	"isFrozen" : Number,
-	"24hrHigh" : Number,
-	"24hrLow" : Number
+	"quoteVolume" : Number,
+ 	"isFrozen" : Number
 });
 
-/* Collection */
+/* Create Collection */
 var usdt_btc = mongoose.model('usdt_btc', data, 'usdt_btc');
 var usdt_str = mongoose.model('usdt_str', data, 'usdt_str');
 var usdt_eth = mongoose.model('usdt_eth', data, 'usdt_eth');
@@ -65,19 +64,18 @@ poloniex.subscribe('ticker');
 
 poloniex.on('message', (channelName, data, seq) => {
   if (channelName === 'ticker') {
+    
     var input = {
-    	sname : 'POL', 
-    	date : timestamp,
-    	last : data.last,
-    	lowestAsk : data.lowestAsk,
-    	highestBid : data.highestBid,
-    	percentChange : data.percentChange,
-    	baseVolume : data.baseVolume,
-    	quoteVolume : data.quoteVolume,
-    	isFrozen : data.isFrozen,
-    	24hrHigh : data.24hrHigh,
-    	24hrLow : data.24hrLow
-    	};
+		    	sname : 'POL', 
+		    	date : timestamp,
+		    	last : data.last,
+		    	lowestAsk : data.lowestAsk,
+		    	highestBid : data.highestBid,
+		    	percentChange : data.percentChange,
+		    	baseVolume : data.baseVolume,
+		    	quoteVolume : data.quoteVolume,
+		    	isFrozen : data.isFrozen
+	};
 
 	if (data.currencyPair === 'USDT_BTC'){
 		dbo.collection("usdt_btc").insertOne(input, function(err, res) {
@@ -140,8 +138,6 @@ poloniex.on('message', (channelName, data, seq) => {
 			if (err) throw err;
 		});
 	}
-
-
   }
 });
 
@@ -160,6 +156,6 @@ poloniex.on('error', (error) => {
 poloniex.openWebSocket({ version: 2 });
 /* POLONIEX DATA INSERTION END */
 
-	
+
 });//MongoClient Connect
 

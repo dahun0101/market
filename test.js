@@ -1,5 +1,4 @@
 var mongoose = require('mongoose');
-var MongoClient = require('mongodb').MongoClient;
 var request = require('request');
 var cron = require('node-cron');
 const Poloniex = require('poloniex-api-node');
@@ -18,10 +17,16 @@ var tradeSite = new mongoose.Schema({
 	"Sname" : {type : String, unique : true}
 });
 
+var sitename = mongoose.model('sitename', tradeSite, 'sitename');
+
 var market = new mongoose.Schema({
-	"Sname" : {type : String, ref : 'sitename'},
-	"Mname" : {type : String, unique : true}
+	// "Sname" : {type : String, ref : 'sitename'},
+	// "Mname" : {type : String, unique : true}
+	"Sname" : String,
+	"Mname" : String
 });
+
+var marketname = mongoose.model('marketname', market, 'marketname');
 
 var poloniexData = new mongoose.Schema({
 	"Sname" : {type : String, ref : 'sitename'},
@@ -38,8 +43,8 @@ var poloniexData = new mongoose.Schema({
 	"24hrLow" : Number
 });
 
-var sitename = mongoose.model('sitename', tradeSite, 'sitename');
-var marketname = mongoose.model('marketname', market, 'marketname');
+
+
 
 
 // Poloniex
@@ -47,15 +52,23 @@ var marketname = mongoose.model('marketname', market, 'marketname');
 var PoloniexSite = new sitename({Sname : 'Poloniex'});
 
 PoloniexSite.save(function (err){
-	//if(err) return handleError(err);
-})
-
-var PoloniexMarket = new marketname({Sname : PoloniexSite.Sname, Mname : 'usdt_btc'});
-PoloniexMarket.save(function (err){
-	//if(err) return handleError(err);
+	if(err) return handleError(err);
 })
 
 
+
+// var PoloniexMarket = new marketname();
+
+var arr = [{Sname : 'Poloniex', Mname : 'usdt_btc'}, {Sname : 'Poloniex', Mname : 'usdt_str'}];
+
+
+// PoloniexMarket.save(function (err){
+// 	//if(err) return handleError(err);
+// })
+
+PoloniexMarket.insertMany(arr, function(error, docs){
+	if(error) return handleError(error);
+})
 poloniex.subscribe('ticker');
 
 poloniex.on('message', (channelName, data, seq) => {
@@ -68,7 +81,7 @@ poloniex.on('message', (channelName, data, seq) => {
 
   }
 
- 
+
 });
 
 poloniex.on('open', () => {
@@ -84,3 +97,4 @@ poloniex.on('error', (error) => {
 });
 
 poloniex.openWebSocket({ version: 2 });
+
