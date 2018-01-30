@@ -1,16 +1,9 @@
 var mongoose = require('mongoose');
-var MongoClient = require('mongodb').MongoClient;
-var request = require('request');
-var cron = require('node-cron');
-const Poloniex = require('poloniex-api-node');
-
-//current time
-var timestamp = Math.floor(Date.now()/1000);
-
+const PoloniexApiPush = require('poloniex-api-push');
+var bittrex = require('node-bittrex-api');
 /*mongodb를 nodejs와 연동한다.*/
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
 mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaq?ssl=true&authSource=admin');
-//mongoose.connect('mongodb://localhost:27017/coinsdaq');
 
 var db = mongoose.connection;
 
@@ -23,125 +16,331 @@ db.once('open', function callback () {
       console.log("DB connection open");
 });
 
-var ticker_schema = new mongoose.Schema({
-	"Sname": String,
-	"date":Date,
-	"currencyPair": String,
-	"last" : Number,
-	"lowestAsk" : Number,
-	"highestBid" : Number,
-	"percentChange" : Number,
-	"baseVolume" : Number,
-	"quoteVolume" : Number,
-	"isFrozen" : Number,
-	"24hrHigh" : Number,
-	"24hrLow" : Number
+var tradedata_schema = new mongoose.Schema({
+	"Sname" : String,
+	"type" : String,
+	"rate" : Number,
+	"amount" : Number,
+	"date" : Date,
+	"total" : Number
 });
 
-let poloniex = new Poloniex();
+const poloPush = new PoloniexApiPush();
+
+var USDT_BTC = mongoose.model('USDT_BTC', tradedata_schema, 'USDT_BTC'); //bitcoin
+var USDT_STR = mongoose.model('USDT_STR', tradedata_schema, 'USDT_STR'); //stellar
+var USDT_ETH = mongoose.model('USDT_ETH', tradedata_schema, 'USDT_ETH'); //ethereum
+var USDT_XRP = mongoose.model('USDT_XRP', tradedata_schema, 'USDT_XRP'); //ripple
+var USDT_BCH = mongoose.model('USDT_BCH', tradedata_schema, 'USDT_BCH'); //bitcoin cash
+var USDT_NXT = mongoose.model('USDT_NXT', tradedata_schema, 'USDT_NXT'); //nxt
+var USDT_LTC = mongoose.model('USDT_LTC', tradedata_schema, 'USDT_LTC'); //litecoin
+var USDT_ETC = mongoose.model('USDT_ETC', tradedata_schema, 'USDT_ETC'); //ethereum classic
+var USDT_ZEC = mongoose.model('USDT_ZEC', tradedata_schema, 'USDT_ZEC'); //Zcash
+var USDT_XMR = mongoose.model('USDT_XMR', tradedata_schema, 'USDT_XMR'); //monero
+var USDT_REP = mongoose.model('USDT_REP', tradedata_schema, 'USDT_REP'); //augur
+var USDT_DASH = mongoose.model('USDT_DASH', tradedata_schema, 'USDT_DASH'); //dash
+var USDT_NEO = mongoose.model('USDT_NEO', tradedata_schema, 'USDT_NEO'); //neo
+var USDT_ADA = mongoose.model('USDT_ADA', tradedata_schema, 'USDT_ADA'); //ada
+var USDT_XVG = mongoose.model('USDT_XVG', tradedata_schema, 'USDT_XVG'); //verge
+var USDT_OMG = mongoose.model('USDT_OMG', tradedata_schema, 'USDT_OMG'); //omisego
+var USDT_BTG = mongoose.model('USDT_BTG', tradedata_schema, 'USDT_BTG'); //bitcoin gold
 
 
-var USDT_BTC = mongoose.model('USDT_BTC', ticker_schema, 'USDT_BTC');
-var usdt_str = mongoose.model('usdt_str', ticker_schema, 'usdt_str');
-var usdt_eth = mongoose.model('usdt_eth', ticker_schema, 'usdt_eth');
-var usdt_xrp = mongoose.model('usdt_xrp', ticker_schema, 'usdt_xrp');
-var usdt_bch = mongoose.model('usdt_bch', ticker_schema, 'usdt_bch');
-var usdt_nxt = mongoose.model('usdt_nxt', ticker_schema, 'usdt_nxt');
-var usdt_ltc = mongoose.model('usdt_ltc', ticker_schema, 'usdt_ltc');
-var usdt_etc = mongoose.model('usdt_etc', ticker_schema, 'usdt_etc');
-var usdt_zec = mongoose.model('usdt_zec', ticker_schema, 'usdt_zec');
-var usdt_xmr = mongoose.model('usdt_xmr', ticker_schema, 'usdt_xmr');
-var usdt_rep = mongoose.model('usdt_rep', ticker_schema, 'usdt_rep');
-var usdt_dash = mongoose.model('usdt_dash', ticker_schema, 'usdt_dash');
 
+poloPush.init().then(() => {
 
-poloniex.subscribe('ticker');
-poloniex.on('message', (channelName, data, seq) => {
- 	if (channelName === 'ticker' && data.currencyPair === 'USDT_BTC')
- 	{
- 		db.collection("USDT_BTC").save({Sname:'pol', date:timestamp, data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_STR')
-	{
-		db.collection("USDT_STR").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_ETH')
-	{
-		db.collection("USDT_ETH").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_XRP')
-	{
-		db.collection("USDT_XRP").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_BCH')
-	{
-		db.collection("USDT_BCH").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_NXT')
-	{
-		db.collection("USDT_NXT").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_LTC')
-	{
-		db.collection("USDT_LTC").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_ETC')
-	{
-		db.collection("USDT_ETC").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_ZEC')
-	{
-		db.collection("USDT_ZEC").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_XMR')
-	{
-		db.collection("USDT_XMR").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_REP')
-	{
-		db.collection("USDT_REP").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
-	else if(channelName === 'ticker' && data.currencyPair === 'USDT_DASH')
-	{
-		db.collection("USDT_DASH").save({Sname:'pol',date:timestamp,data},function(err,res){
- 			if(err) throw err;
- 		});
-	}
+    poloPush.subscribe('USDT_BTC');
+    poloPush.subscribe('USDT_STR');
+    poloPush.subscribe('USDT_ETH');
+    poloPush.subscribe('USDT_XRP');
+    poloPush.subscribe('USDT_BCH');
+    poloPush.subscribe('USDT_NXT');
+    poloPush.subscribe('USDT_LTC');
+    poloPush.subscribe('USDT_ETC');
+    poloPush.subscribe('USDT_ZEC');
+    poloPush.subscribe('USDT_XMR');
+    poloPush.subscribe('USDT_REP');
+    poloPush.subscribe('USDT_DASH');
 
-	//console.log(`Ticker: ${JSON.stringify(data)}`);
+    poloPush.on('USDT_BTC-trade', (trade) => {
+    	
+    	USDT_BTC = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+		db.collection("USDT_BTC").save(USDT_BTC, function(err,res){
+		    	if(err) throw err;
+		})
+  	});
+
+    poloPush.on('USDT_STR-trade', (trade) => {
+
+    	USDT_STR = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_STR").save(USDT_STR,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_ETH-trade', (trade) => {
+
+  		USDT_ETH = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_ETH").save(USDT_ETH, function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_XRP-trade', (trade) => {
+
+  		USDT_XRP = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_XRP").save(USDT_XRP,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_BCH-trade', (trade) => {
+
+  		USDT_BCH = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_BCH").save(USDT_BCH,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_NXT-trade', (trade) => {
+
+  		USDT_NXT = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_NXT").save(USDT_NXT,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_LTC-trade', (trade) => {
+
+  		USDT_LTC = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_LTC").save(USDT_LTC,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_ETC-trade', (trade) => {
+
+  		USDT_ETC = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_ETC").save(USDT_ETC,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_ZEC-trade', (trade) => {
+
+  		USDT_ZEC = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_ZEC").save(USDT_ZEC,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_XMR-trade', (trade) => {
+
+  		USDT_XMR = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_XMR").save(USDT_XMR,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_REP-trade', (trade) => {
+
+  		USDT_REP = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_REP").save(USDT_REP,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
+  	poloPush.on('USDT_DASH-trade', (trade) => {
+
+  		USDT_DASH = {
+    		Sname : 'POL',
+    		date : trade.date,
+    		type : trade.type,
+    		rate : trade.rate,
+    		amount : trade.amount,
+    		total : (trade.rate*trade.amount)
+    	}
+
+	    db.collection("USDT_DASH").save(USDT_DASH,function(err,res){
+	    	if(err) throw err;
+	    })
+  	});
 });
 
+bittrex.options({
+	websockets: {
+	    onConnect: function() {
 
-poloniex.on('open', () => {
-  console.log(`Poloniex WebSocket connection open`);
+	    console.log('Bittrex Websocket connected');
+
+		    bittrex.websockets.subscribe(['USDT-BTC'], function(data) {
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			
+			          			USDT_BTC = {
+						    		Sname : 'BIT',
+						    		date : obj.TimeStamp,
+						    		type : obj.OrderType,
+						    		rate : obj.Rate,
+						    		amount : obj.Quantity,
+						    		total : (obj.Rate*obj.Quantity)
+						    	}
+
+			          			 db.collection("USDT_BTC").save(USDT_BTC, function(err,res){
+			          			 	if(err) throw err;
+			          			 })
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-ETH'], function(data) {
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			
+			          			USDT_ETH = {
+						    		Sname : 'BIT',
+						    		date : obj.TimeStamp,
+						    		type : obj.OrderType,
+						    		rate : obj.Rate,
+						    		amount : obj.Quantity,
+						    		total : (obj.Rate*obj.Quantity)
+						    	}
+
+			          			 db.collection("USDT_ETH").save(USDT_ETH, function(err,res){
+			          			 	if(err) throw err;
+			          			 })
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-NEO'], function(data) {
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			
+			          			USDT_NEO = {
+						    		Sname : 'BIT',
+						    		date : obj.TimeStamp,
+						    		type : obj.OrderType,
+						    		rate : obj.Rate,
+						    		amount : obj.Quantity,
+						    		total : (obj.Rate*obj.Quantity)
+						    	}
+
+			          			 db.collection("USDT_NEO").save(USDT_NEO, function(err,res){
+			          			 	if(err) throw err;
+			          			 })
+		          		}
+		         	});
+		        }
+		    });
+
+	    },
+	    onDisconnect: function() {
+	      console.log('Websocket disconnected');
+	    }
+	}
 });
-poloniex.on('close', (reason, details) => {
-  console.log(`Poloniex WebSocket connection disconnected`);
+
+var websocketClient;
+bittrex.websockets.client(function(client) {
+  websocketClient = client;
 });
-poloniex.on('error', (error) => {
-  console.log(`An error has occured`);
-});
-poloniex.openWebSocket({ version: 2 });
->>>>>>> master
+
