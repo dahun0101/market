@@ -5,7 +5,7 @@ const PoloniexApiPush = require('poloniex-api-push');
 /*-------------------------------------mongodb를 nodejs와 연동한다.--------------------------------------*/
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
 //mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaqoo?ssl=true&authSource=admin');
-mongoose.connect('mongodb://localhost:27017/localcoinsdaq');
+mongoose.connect('mongodb://localhost:27017/localpolo');
 var db = mongoose.connection;
 // we get notified if error occurs
 db.on('error', console.error.bind(console, 'DB connection error:'));
@@ -25,30 +25,48 @@ var trade_schema = new mongoose.Schema({
 	"date":Date,
 	"total":Number
 });
-var currencyPair = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT","USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH")
+var currencyPair_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
+                                  "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
+var dBCollection_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
+                                  "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
+
+var currencyPair_bittrex = new Array("USDT-BTC","USDT-ETH","USDT-XRP","USDT-NXT","USDT-LTC",
+                                     "USDT-ETC","USDT-ZEC","USDT-XMR","USDT-DASH","USDT-NEO",
+                                     "USDT-ADA","USDT-XVG","USDT-OMG","USDT-BTG","USDT-BCC");
+var dBCollection_bittrex = new Array("USDT_BTC", "USDT_ETH","USDT_XRP","USDT_NXT","USDT_LTC",
+                                     "USDT_ETC", "USDT_ZEC","USDT_XMR","USDT_DASH","USDT_NEO",
+                                     "USDT_ADA", "USDT_XVG","USDT_OMG","USDT_BTG","USDT_BCC");
+
+
+var USDT_BTC = mongoose.model('USDT_BTC', trade_schema, 'USDT_BTC'); //bitcoin
+var USDT_STR = mongoose.model('USDT_STR', trade_schema, 'USDT_STR'); //stellar
+var USDT_ETH = mongoose.model('USDT_ETH', trade_schema, 'USDT_ETH'); //ethereum
+var USDT_XRP = mongoose.model('USDT_XRP', trade_schema, 'USDT_XRP'); //ripple
+var USDT_BCH = mongoose.model('USDT_BCH', trade_schema, 'USDT_BCH'); //bitcoin cash
+var USDT_NXT = mongoose.model('USDT_NXT', trade_schema, 'USDT_NXT'); //nxt
+var USDT_LTC = mongoose.model('USDT_LTC', trade_schema, 'USDT_LTC'); //litecoin
+var USDT_ETC = mongoose.model('USDT_ETC', trade_schema, 'USDT_ETC'); //ethereum classic
+var USDT_ZEC = mongoose.model('USDT_ZEC', trade_schema, 'USDT_ZEC'); //Zcash
+var USDT_XMR = mongoose.model('USDT_XMR', trade_schema, 'USDT_XMR'); //monero
+var USDT_REP = mongoose.model('USDT_REP', trade_schema, 'USDT_REP'); //augur
+var USDT_DASH = mongoose.model('USDT_DASH', trade_schema, 'USDT_DASH'); //dash
+var USDT_NEO = mongoose.model('USDT_NEO', trade_schema, 'USDT_NEO'); //neo
+var USDT_ADA = mongoose.model('USDT_ADA', trade_schema, 'USDT_ADA'); //ada
+var USDT_XVG = mongoose.model('USDT_XVG', trade_schema, 'USDT_XVG'); //verge
+var USDT_OMG = mongoose.model('USDT_OMG', trade_schema, 'USDT_OMG'); //omisego
+var USDT_BTG = mongoose.model('USDT_BTG', trade_schema, 'USDT_BTG'); //bitcoin gold
+
+
 
 const poloPush = new PoloniexApiPush();
 
-var USDT_BTC = mongoose.model('USDT_BTC', trade_schema, 'USDT_BTC'); //currencyPair[0]
-var usdt_str = mongoose.model('usdt_str', trade_schema, 'usdt_str'); //currencyPair[1]
-var usdt_eth = mongoose.model('usdt_eth', trade_schema, 'usdt_eth');//currencyPair[2]
-var usdt_xrp = mongoose.model('usdt_xrp', trade_schema, 'usdt_xrp');//currencyPair[3]
-var usdt_bch = mongoose.model('usdt_bch', trade_schema, 'usdt_bch');//currencyPair[4]
-var usdt_nxt = mongoose.model('usdt_nxt', trade_schema, 'usdt_nxt');//currencyPair[5]
-var usdt_ltc = mongoose.model('usdt_ltc', trade_schema, 'usdt_ltc');//currencyPair[6]
-var usdt_etc = mongoose.model('usdt_etc', trade_schema, 'usdt_etc');//currencyPair[7]
-var usdt_zec = mongoose.model('usdt_zec', trade_schema, 'usdt_zec');//currencyPair[8]
-var usdt_xmr = mongoose.model('usdt_xmr', trade_schema, 'usdt_xmr');//currencyPair[9]
-var usdt_rep = mongoose.model('usdt_rep', trade_schema, 'usdt_rep');//currencyPair[10]
-var usdt_dash = mongoose.model('usdt_dash', trade_schema, 'usdt_dash');//currencyPair[11]
-
-
-
 poloPush.init().then(() => {
-
-	for(i=0; i < currencyPair.length ; i++){
-			poloPush.subscribe(currencyPair[i]);
+  console.log("Poloniex Websocket Connect");
+	for(i=0; i < currencyPair_polo.length ; i++){
+			poloPush.subscribe(currencyPair_polo[i]);
 	}
+
+  
 	poloPush.on('USDT_BTC-trade', (trade) => {
 
     	db.collection("USDT_BTC").save({Sname:'pol', trade, total:trade.rate*trade.amount},function(err,res){
@@ -145,4 +163,3 @@ poloPush.init().then(() => {
    		console.log('USDT_DASH-trade',  trade.type, trade.rate, trade.amount,trade.date, trade.rate*trade.amount);
   	});
 });
-
