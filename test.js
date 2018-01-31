@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 const PoloniexApiPush = require('poloniex-api-push');
 var bittrex = require('node-bittrex-api');
-/*mongodb를 nodejs와 연동한다.*/
+
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
 mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaq?ssl=true&authSource=admin');
 
@@ -12,7 +12,6 @@ db.on('error', console.error.bind(console, 'DB connection error:'));
 
 // executed when the connection opens
 db.once('open', function callback () {
-    // add your code here when opening
       console.log("DB connection open");
 });
 
@@ -45,9 +44,40 @@ var USDT_XVG = mongoose.model('USDT_XVG', tradedata_schema, 'USDT_XVG'); //verge
 var USDT_OMG = mongoose.model('USDT_OMG', tradedata_schema, 'USDT_OMG'); //omisego
 var USDT_BTG = mongoose.model('USDT_BTG', tradedata_schema, 'USDT_BTG'); //bitcoin gold
 
+var insertData = function(currencyPair, data, Sname){
 
+	if(Sname === 'POL'){
+		DATA_SCHEMA = {
+			Sname : Sname,
+			date : data.date,
+			type : data.type,
+			rate : Number(data.rate),
+			amount : Number(data.amount),
+			total : (data.rate*data.amount)
+		}
+	}
+	else if(Sname === 'BIT'){
+		DATA_SCHEMA = {
+			Sname : Sname,
+			date : data.date,
+			type : data.OrderType,
+			rate : data.Rate,
+			amount : data.Quantity,
+			total : (data.Rate*data.Quantity)
+		}
+	}
+
+	console.log(DATA_SCHEMA);
+
+	db.collection(currencyPair).save(DATA_SCHEMA, function(err,res){
+		if(err) throw err;
+	})
+}
 
 poloPush.init().then(() => {
+
+	console.log("Poloniex Websocket Connect")
+	var Sname = "POL"
 
     poloPush.subscribe('USDT_BTC');
     poloPush.subscribe('USDT_STR');
@@ -63,195 +93,67 @@ poloPush.init().then(() => {
     poloPush.subscribe('USDT_DASH');
 
     poloPush.on('USDT_BTC-trade', (trade) => {
-    	
-    	USDT_BTC = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-		db.collection("USDT_BTC").save(USDT_BTC, function(err,res){
-		    	if(err) throw err;
-		})
+    	var currencyPair = "USDT_BTC";
+    	insertData(currencyPair, trade, Sname);
   	});
-
     poloPush.on('USDT_STR-trade', (trade) => {
-
-    	USDT_STR = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_STR").save(USDT_STR,function(err,res){
-	    	if(err) throw err;
-	    })
+		var currencyPair = "USDT_STR";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_ETH-trade', (trade) => {
-
-  		USDT_ETH = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_ETH").save(USDT_ETH, function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_ETH";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_XRP-trade', (trade) => {
-
-  		USDT_XRP = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_XRP").save(USDT_XRP,function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_XRP";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_BCH-trade', (trade) => {
-
-  		USDT_BCH = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_BCH").save(USDT_BCH,function(err,res){
-	    	if(err) throw err;
-	    })
+		var currencyPair = "USDT_BCH";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_NXT-trade', (trade) => {
-
-  		USDT_NXT = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_NXT").save(USDT_NXT,function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_NXT";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_LTC-trade', (trade) => {
-
-  		USDT_LTC = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_LTC").save(USDT_LTC,function(err,res){
-	    	if(err) throw err;
-	    })
+		var currencyPair = "USDT_LTC";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_ETC-trade', (trade) => {
-
-  		USDT_ETC = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_ETC").save(USDT_ETC,function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_ETC";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_ZEC-trade', (trade) => {
-
-  		USDT_ZEC = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_ZEC").save(USDT_ZEC,function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_ZEC";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_XMR-trade', (trade) => {
-
-  		USDT_XMR = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_XMR").save(USDT_XMR,function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_XMR";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_REP-trade', (trade) => {
-
-  		USDT_REP = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_REP").save(USDT_REP,function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_REP";
+    	insertData(currencyPair, trade, Sname);
   	});
   	poloPush.on('USDT_DASH-trade', (trade) => {
-
-  		USDT_DASH = {
-    		Sname : 'POL',
-    		date : trade.date,
-    		type : trade.type,
-    		rate : trade.rate,
-    		amount : trade.amount,
-    		total : (trade.rate*trade.amount)
-    	}
-
-	    db.collection("USDT_DASH").save(USDT_DASH,function(err,res){
-	    	if(err) throw err;
-	    })
+  		var currencyPair = "USDT_DASH";
+    	insertData(currencyPair, trade, Sname);
   	});
 });
 
 bittrex.options({
+
 	websockets: {
 	    onConnect: function() {
 
 	    console.log('Bittrex Websocket connected');
 
+	    	var Sname = "BIT";
+
 		    bittrex.websockets.subscribe(['USDT-BTC'], function(data) {
+
+		    var currencyPair = "USDT_BTC";
 
 		        if (data.M === 'updateExchangeState') {
 		          
@@ -260,19 +162,11 @@ bittrex.options({
 		          		for(var i = 0; i < data_for.Fills.length; i++){
 		          			
 		          			var obj = data_for.Fills[i];
-		          			
-			          			USDT_BTC = {
-						    		Sname : 'BIT',
-						    		date : obj.TimeStamp,
-						    		type : obj.OrderType,
-						    		rate : obj.Rate,
-						    		amount : obj.Quantity,
-						    		total : (obj.Rate*obj.Quantity)
-						    	}
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
 
-			          			 db.collection("USDT_BTC").save(USDT_BTC, function(err,res){
-			          			 	if(err) throw err;
-			          			 })
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
 		          		}
 		         	});
 		        }
@@ -280,6 +174,8 @@ bittrex.options({
 
 		    bittrex.websockets.subscribe(['USDT-ETH'], function(data) {
 
+		        var currencyPair = "USDT_ETH";
+
 		        if (data.M === 'updateExchangeState') {
 		          
 		          	data.A.forEach(function(data_for) {
@@ -287,19 +183,11 @@ bittrex.options({
 		          		for(var i = 0; i < data_for.Fills.length; i++){
 		          			
 		          			var obj = data_for.Fills[i];
-		          			
-			          			USDT_ETH = {
-						    		Sname : 'BIT',
-						    		date : obj.TimeStamp,
-						    		type : obj.OrderType,
-						    		rate : obj.Rate,
-						    		amount : obj.Quantity,
-						    		total : (obj.Rate*obj.Quantity)
-						    	}
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
 
-			          			 db.collection("USDT_ETH").save(USDT_ETH, function(err,res){
-			          			 	if(err) throw err;
-			          			 })
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
 		          		}
 		         	});
 		        }
@@ -307,6 +195,8 @@ bittrex.options({
 
 		    bittrex.websockets.subscribe(['USDT-NEO'], function(data) {
 
+		        var currencyPair = "USDT_NEO";
+
 		        if (data.M === 'updateExchangeState') {
 		          
 		          	data.A.forEach(function(data_for) {
@@ -314,19 +204,263 @@ bittrex.options({
 		          		for(var i = 0; i < data_for.Fills.length; i++){
 		          			
 		          			var obj = data_for.Fills[i];
-		          			
-			          			USDT_NEO = {
-						    		Sname : 'BIT',
-						    		date : obj.TimeStamp,
-						    		type : obj.OrderType,
-						    		rate : obj.Rate,
-						    		amount : obj.Quantity,
-						    		total : (obj.Rate*obj.Quantity)
-						    	}
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
 
-			          			 db.collection("USDT_NEO").save(USDT_NEO, function(err,res){
-			          			 	if(err) throw err;
-			          			 })
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-XRP'], function(data) {
+
+		        var currencyPair = "USDT_XRP";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-ADA'], function(data) {
+
+		        var currencyPair = "USDT_ADA";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-LTC'], function(data) {
+
+		        var currencyPair = "USDT_NEO";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-ETC'], function(data) {
+
+		        var currencyPair = "USDT_NEO";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-BCC'], function(data) {
+
+		        var currencyPair = "USDT_BCH";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-XVG'], function(data) {
+
+		        var currencyPair = "USDT_XVG";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-OMG'], function(data) {
+
+		        var currencyPair = "USDT_OMG";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-XMR'], function(data) {
+
+		        var currencyPair = "USDT_XMR";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-BTG'], function(data) {
+
+		        var currencyPair = "USDT_BTG";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-ZEC'], function(data) {
+
+		        var currencyPair = "USDT_ZEC";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-DASH'], function(data) {
+
+		        var currencyPair = "USDT_DASH";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
+		          		}
+		         	});
+		        }
+		    });
+
+		    bittrex.websockets.subscribe(['USDT-NXT'], function(data) {
+
+		        var currencyPair = "USDT_NXT";
+
+		        if (data.M === 'updateExchangeState') {
+		          
+		          	data.A.forEach(function(data_for) {
+
+		          		for(var i = 0; i < data_for.Fills.length; i++){
+		          			
+		          			var obj = data_for.Fills[i];
+		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
+
+			  				obj.date = t_time;
+
+			  				insertData(currencyPair, obj, Sname);
 		          		}
 		         	});
 		        }
