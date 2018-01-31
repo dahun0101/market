@@ -17,10 +17,10 @@ db.once('open', function callback () {
 
 var tradedata_schema = new mongoose.Schema({
 	"Sname" : String,
+	"date" : Date,
 	"type" : String,
 	"rate" : Number,
 	"amount" : Number,
-	"date" : Date,
 	"total" : Number
 });
 
@@ -66,9 +66,6 @@ var insertData = function(currencyPair, data, Sname){
 			total : (data.Rate*data.Quantity)
 		}
 	}
-
-	console.log(DATA_SCHEMA);
-
 	db.collection(currencyPair).save(DATA_SCHEMA, function(err,res){
 		if(err) throw err;
 	})
