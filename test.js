@@ -44,6 +44,14 @@ var USDT_XVG = mongoose.model('USDT_XVG', tradedata_schema, 'USDT_XVG'); //verge
 var USDT_OMG = mongoose.model('USDT_OMG', tradedata_schema, 'USDT_OMG'); //omisego
 var USDT_BTG = mongoose.model('USDT_BTG', tradedata_schema, 'USDT_BTG'); //bitcoin gold
 
+var POL_OPEN = 0;
+var POL_HIGH = 0;
+var POL_LOW = 0;
+var POL_CLOSE = 0;
+var POL_VOLUME_RATE = 0;
+var POL_VOLUME_AMOUNT = 0;
+
+var count = 0;
 var insertData = function(currencyPair, data, Sname){
 
 	if(Sname === 'POL'){
@@ -55,6 +63,23 @@ var insertData = function(currencyPair, data, Sname){
 			amount : Number(data.amount),
 			total : (data.rate*data.amount)
 		}
+
+		if(POL_OPEN === 0){
+			POL_OPEN = DATA_SCHEMA.rate;
+		}
+
+		if(DATA_SCHEMA.rate > POL_HIGH){
+			POL_HIGH = DATA_SCHEMA.rate;
+		}
+
+		if(DATA_SCHEMA.rate < POL_LOW){
+			POL_LOW = DATA_SCHEMA.rate;
+		}
+
+		POL_CLOSE = DATA_SCHEMA.rate;
+		POL_VOLUME_AMOUNT += DATA_SCHEMA.amount;
+		POL_VOLUME_RATE += DATA_SCHEMA.total;
+
 	}
 	else if(Sname === 'BIT'){
 		DATA_SCHEMA = {
@@ -189,6 +214,7 @@ bittrex.options({
 		         	});
 		        }
 		    });
+/*
 
 		    bittrex.websockets.subscribe(['USDT-NEO'], function(data) {
 
@@ -462,7 +488,7 @@ bittrex.options({
 		         	});
 		        }
 		    });
-
+*/
 	    },
 	    onDisconnect: function() {
 	      console.log('Websocket disconnected');
