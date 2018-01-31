@@ -51,7 +51,6 @@ var POL_CLOSE = 0;
 var POL_VOLUME_RATE = 0;
 var POL_VOLUME_AMOUNT = 0;
 
-var count = 0;
 var insertData = function(currencyPair, data, Sname){
 
 	if(Sname === 'POL'){
