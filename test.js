@@ -38,6 +38,11 @@ var chartdata_schema = new mongoose.Schema({
 
 const poloPush = new PoloniexApiPush();
 
+var site_name = new Array("POL","BIT");
+
+var currencyPair_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
+                             "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
+
 var currencyPair_bittrex = new Array("USDT-BTC","USDT-ETH","USDT-XRP","USDT-NXT","USDT-LTC",
                             "USDT-ETC","USDT-ZEC","USDT-XMR","USDT-DASH",
                             "USDT-NEO","USDT-ADA","USDT-XVG","USDT-OMG","USDT-BTG","USDT-BCC");
@@ -78,32 +83,86 @@ var USDT_XVG_Chart = mongoose.model('USDT_XVG_Chart', chartdata_schema, 'USDT_XV
 var USDT_OMG_Chart = mongoose.model('USDT_OMG_Chart', chartdata_schema, 'USDT_OMG_Chart'); 
 var USDT_BTG_Chart = mongoose.model('USDT_BTG_Chart', chartdata_schema, 'USDT_BTG_Chart'); 
 
-var POL_OPEN = 0;
-var POL_HIGH = 0;
-var POL_LOW = 0;
-var POL_CLOSE = 0;
-var POL_VOLUME_RATE = 0;
-var POL_VOLUME_AMOUNT = 0;
 
-cron.schedule('0,5,10,15,20,25,30,35,40,45,50,55 * * * *', function()
-{
-  
-	var currentTime = (Date.getTime()/1000) - 60;
+/* chart data array initialization */
+var site = new Array(6);
+var POL_chartdata = new Array(6);
+var BIT_chartdata = new Array(6);
 
+for(var i = 0 ; i < 6 ; i++ ){
+	POL_chartdata[i] = new Array(currencyPair_polo.length);
+	BIT_chartdata[i] = new Array(currencyPair_bittrex.length);
+	site[i] = new Array(site_name.length);
+}
+
+cron.schedule('*/1 * * * *', function(){
+		
+	var currentTime = Math.floor(Date.now()/1000);
+	var pastTime = currentTime - 60;
 	
+	var snum = -1;
+	var open = 0;
+	var high = 0;
+	var low = 0;
+	var close = 0;
+	var volumeAMOUNT = 0;
+	var volumeRate = 0;
 
-	POL_VOLUME_RATE = 0;
-  	POL_OPEN = 0;
-  	POL_HIGH = 0;
-  	POL_LOW = 0;
-  	POL_CLOSE = 0;
-  	POL_VOLUME_AMOUNT = 0;
+	for(var i in currencyPair_polo){
+//모든 마켓들의 배열로 교체해야함 
+
+		db.collection(currencyPair_polo[i]).find({ date:{$lt:currentTime,$gt:pastTime}}).toArray(function(err, filter){
+//화폐들의 체결 내역 -> filter
+
+			if (err) throw err;
+			
+			for(var j in filter){
+//filter를 하나씩 읽음				
+
+				var result = filter[j];
+
+				for(var k in site_name){
+					if(result.Sname === site_name[k]){
+						snum = k;
+					}
+				}
+//하나씩 읽은 결과의 회사 이름을 알아냄
+
+				if (open == 0){
+					open = result.rate;
+					high = result.rate;
+					low = result.rate;
+				}
+				
+				if (result.rate >= high){
+					high = result.rate;
+				}
+
+				if (result.rate <= low){
+					low = result.rate;
+				}
+
+				close = result.rate;
+				volumeRate += result.rate;
+				volumeAMOUNT += result.amount;
+
+				if(result.Sname === 'POL'){
+
+				}
+				else if(result.Sname === 'BIT'){
+
+				}
+			}
+
+		});		
+	}
 
 });
 
 var insertData = function(currencyPair, data, Sname){
 
 	if(Sname === 'POL'){
+
 		DATA_SCHEMA = {
 			Sname : Sname,
 			date : data.date,
@@ -112,32 +171,9 @@ var insertData = function(currencyPair, data, Sname){
 			amount : Number(data.amount),
 			total : (data.rate*data.amount)
 		}
-
-		if(POL_OPEN === 0){
-			POL_OPEN = DATA_SCHEMA.rate;
-		}
-
-		if(DATA_SCHEMA.rate > POL_HIGH){
-			POL_HIGH = DATA_SCHEMA.rate;
-		}
-
-		if(DATA_SCHEMA.rate < POL_LOW){
-			POL_LOW = DATA_SCHEMA.rate;
-		}
-
-		POL_CLOSE = DATA_SCHEMA.rate;
-		POL_VOLUME_AMOUNT += DATA_SCHEMA.amount;
-		POL_VOLUME_RATE += DATA_SCHEMA.total;
-
-console.log("POL_OPEN : "+POL_OPEN);
-console.log("POL_HIGH : "+POL_HIGH);
-console.log("POL_LOW : "+POL_LOW);
-console.log("POL_CLOSE : "+POL_CLOSE);
-console.log("POL_VOLUME_AMOUNT : "+POL_VOLUME_AMOUNT);
-console.log("POL_VOLUME_RATE : "+POL_VOLUME_RATE);
-
 	}
 	else if(Sname === 'BIT'){
+
 		DATA_SCHEMA = {
 			Sname : Sname,
 			date : data.date,
@@ -150,7 +186,9 @@ console.log("POL_VOLUME_RATE : "+POL_VOLUME_RATE);
 
 	db.collection(currencyPair).save(DATA_SCHEMA, function(err,res){
 		if(err) throw err;
+	});
 }
+
 
 poloPush.init().then(() => {
 
@@ -174,10 +212,13 @@ poloPush.init().then(() => {
     	var currencyPair = "USDT_BTC";
     	insertData(currencyPair, trade, Sname);
   	});
+  	
     poloPush.on('USDT_STR-trade', (trade) => {
 		var currencyPair = "USDT_STR";
     	insertData(currencyPair, trade, Sname);
   	});
+
+  	/*
   	poloPush.on('USDT_ETH-trade', (trade) => {
   		var currencyPair = "USDT_ETH";
     	insertData(currencyPair, trade, Sname);
@@ -217,10 +258,10 @@ poloPush.init().then(() => {
   	poloPush.on('USDT_DASH-trade', (trade) => {
   		var currencyPair = "USDT_DASH";
     	insertData(currencyPair, trade, Sname);
-  	});
+  	});*/
 });
 
-
+/*
 bittrex.options({
 
 	websockets: {
@@ -266,3 +307,4 @@ bittrex.websockets.client(function(client) {
   websocketClient = client;
 });
 
+*/
