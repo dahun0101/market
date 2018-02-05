@@ -107,7 +107,7 @@ cron.schedule('*/1 * * * *', function(){
 		var volumeAMOUNT = 0;
 		var volumeRate = 0;
 
-			db.collection(MARKETSTATUS[i]).find({date:{$lt:currentTime,$gte:pastTime}}).toArray(function(err, filter){
+			db.collection(MARKETSTATUS[i]).find({Sname:'POL',date:{$lt:currentTime,$gte:pastTime}}).toArray(function(err, filter){
 
 				if (err) throw err;
 				
