@@ -1,5 +1,10 @@
-var arr = [1,2,3];
+var arr = [aaa,bbb,ccc];
+var aaa_data =new Array();
+var bbb_data =new Array();
+var ccc_data =new Array();
 
-for(var i = 0 ; i < arr.length ; i++){
-    console.log(i);
+for(var i in arr){
+	arr[i]+"_data" = 1;
 }
+
+console.log(aaa_data);

@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 const PoloniexApiPush = require('poloniex-api-push');
 var bittrex = require('node-bittrex-api');
 var cron = require('node-cron');
-
+	
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
 mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaq?ssl=true&authSource=admin');
 
@@ -15,6 +15,9 @@ db.on('error', console.error.bind(console, 'DB connection error:'));
 db.once('open', function callback () {
       console.log("DB connection open");
 });
+
+
+/* DATABASE set up */
 
 var tradedata_schema = new mongoose.Schema({
 	"Sname" : String,
@@ -40,12 +43,17 @@ const poloPush = new PoloniexApiPush();
 
 var site_name = new Array("POL","BIT");
 
-var currencyPair_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
-                             "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
+var MARKETSTATUS = new Array("USDT_ADA","USDT_BCH","USDT_BTC","USDT_BTG","USDT_DASH","USDT_ETC",
+						"USDT_ETH","USDT_LTC","USDT_NEO","USDT_NXT","USDT_OMG","USDT_REP","USDT_STR",
+						"USDT_XMR","USDT_XRP","USDT_XVG","USDT_ZEC");
 
-var currencyPair_bittrex = new Array("USDT-BTC","USDT-ETH","USDT-XRP","USDT-NXT","USDT-LTC",
-                            "USDT-ETC","USDT-ZEC","USDT-XMR","USDT-DASH",
-                            "USDT-NEO","USDT-ADA","USDT-XVG","USDT-OMG","USDT-BTG","USDT-BCC");
+var currencyPair_polo = new Array("","USDT_BCH","USDT_BTC","","USDT_DASH","USDT_ETC",
+						"USDT_ETH","USDT_LTC","","USDT_NXT","","USDT_REP","USDT_STR",
+						"USDT_XMR","USDT_XRP","","USDT_ZEC");
+
+var currencyPair_bit = new Array("USDT-ADA","USDT-BCH","USDT-BTC","USDT-BTG","USDT-DASH","USDT-ETC",
+						"USDT-ETH","USDT-LTC","USDT-NEO","USDT-NXT","USDT-OMG","","",
+						"USDT-XMR","USDT-XRP","USDT-XVG","USDT-ZEC");
 
 var USDT_BTC = mongoose.model('USDT_BTC', tradedata_schema, 'USDT_BTC'); //bitcoin
 var USDT_STR = mongoose.model('USDT_STR', tradedata_schema, 'USDT_STR'); //stellar
@@ -83,78 +91,68 @@ var USDT_XVG_Chart = mongoose.model('USDT_XVG_Chart', chartdata_schema, 'USDT_XV
 var USDT_OMG_Chart = mongoose.model('USDT_OMG_Chart', chartdata_schema, 'USDT_OMG_Chart'); 
 var USDT_BTG_Chart = mongoose.model('USDT_BTG_Chart', chartdata_schema, 'USDT_BTG_Chart'); 
 
-
-/* chart data array initialization */
-var site = new Array(6);
-var POL_chartdata = new Array(6);
-var BIT_chartdata = new Array(6);
-
-for(var i = 0 ; i < 6 ; i++ ){
-	POL_chartdata[i] = new Array(currencyPair_polo.length);
-	BIT_chartdata[i] = new Array(currencyPair_bittrex.length);
-	site[i] = new Array(site_name.length);
-}
-
 cron.schedule('*/1 * * * *', function(){
 		
 	var currentTime = Math.floor(Date.now()/1000);
 	var pastTime = currentTime - 60;
-	
-	var snum = -1;
-	var open = 0;
-	var high = 0;
-	var low = 0;
-	var close = 0;
-	var volumeAMOUNT = 0;
-	var volumeRate = 0;
 
-	for(var i in currencyPair_polo){
-//모든 마켓들의 배열로 교체해야함 
+	for(var i = 0 ; i < MARKETSTATUS.length ; i++){
+		
+		(function(i){
+		
+		var open = 0;
+		var high = 0;
+		var low = 0;
+		var close = 0;
+		var volumeAMOUNT = 0;
+		var volumeRate = 0;
 
-		db.collection(currencyPair_polo[i]).find({ date:{$lt:currentTime,$gt:pastTime}}).toArray(function(err, filter){
-//화폐들의 체결 내역 -> filter
+			db.collection(MARKETSTATUS[i]).find({date:{$lt:currentTime,$gte:pastTime}}).toArray(function(err, filter){
 
-			if (err) throw err;
-			
-			for(var j in filter){
-//filter를 하나씩 읽음				
-
-				var result = filter[j];
-
-				for(var k in site_name){
-					if(result.Sname === site_name[k]){
-						snum = k;
-					}
-				}
-//하나씩 읽은 결과의 회사 이름을 알아냄
-
-				if (open == 0){
-					open = result.rate;
-					high = result.rate;
-					low = result.rate;
-				}
+				if (err) throw err;
 				
-				if (result.rate >= high){
-					high = result.rate;
-				}
+					for(var j =  0; j < filter.length ; j++){
 
-				if (result.rate <= low){
-					low = result.rate;
-				}
+						var result = filter[j];
 
-				close = result.rate;
-				volumeRate += result.rate;
-				volumeAMOUNT += result.amount;
+							if (open === 0) {
+								open = result.rate;
+								high = result.rate;
+								low = result.rate;
+							}
 
-				if(result.Sname === 'POL'){
+						if (result.rate >= high){
+							high = result.rate;
+						}
 
-				}
-				else if(result.Sname === 'BIT'){
+						if (result.rate <= low){
+							low = result.rate;
+						}
 
-				}
-			}
+						close = result.rate;	
 
-		});		
+						volumeRate += result.rate;
+						volumeAMOUNT += result.amount;
+					}
+
+				var collectionName = new String;
+				collectionName = MARKETSTATUS[i]+"_chart";
+					
+					chartdata_schema = {
+						createTime : pastTime,
+						Sname : 'POL',
+						open : open,
+						high : high,
+						low : low,
+						close : close,
+						volumeRate : volumeRate,
+						volumeAMOUNT : volumeAMOUNT
+					}	
+				db.collection(collectionName).save(chartdata_schema, function(err,res){
+					if(err) throw err;
+				});
+			});
+		})(i);	
 	}
 
 });
@@ -184,9 +182,10 @@ var insertData = function(currencyPair, data, Sname){
 		}
 	}
 
-	db.collection(currencyPair).save(DATA_SCHEMA, function(err,res){
+		db.collection(currencyPair).save(DATA_SCHEMA, function(err,res){
 		if(err) throw err;
 	});
+	
 }
 
 
@@ -212,13 +211,10 @@ poloPush.init().then(() => {
     	var currencyPair = "USDT_BTC";
     	insertData(currencyPair, trade, Sname);
   	});
-  	
     poloPush.on('USDT_STR-trade', (trade) => {
 		var currencyPair = "USDT_STR";
     	insertData(currencyPair, trade, Sname);
   	});
-
-  	/*
   	poloPush.on('USDT_ETH-trade', (trade) => {
   		var currencyPair = "USDT_ETH";
     	insertData(currencyPair, trade, Sname);
@@ -258,10 +254,10 @@ poloPush.init().then(() => {
   	poloPush.on('USDT_DASH-trade', (trade) => {
   		var currencyPair = "USDT_DASH";
     	insertData(currencyPair, trade, Sname);
-  	});*/
+  	});
 });
 
-/*
+
 bittrex.options({
 
 	websockets: {
@@ -271,7 +267,7 @@ bittrex.options({
 
 	    	var Sname = "BIT";
 		    
-		    bittrex.websockets.subscribe(currencyPair_bittrex, function(data) {
+		    bittrex.websockets.subscribe(currencyPair_bit, function(data) {
 
 		        if (data.M === 'updateExchangeState') {
 		          
@@ -307,4 +303,3 @@ bittrex.websockets.client(function(client) {
   websocketClient = client;
 });
 
-*/
