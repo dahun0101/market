@@ -20,11 +20,10 @@ db.once('open', function callback () {
 /*-----------------------------------------------------------------------------------------------------*/
 var trade_schema = new mongoose.Schema({
 	"Sname": String,
-	/*"type":String,
-	"rate":Number,
-	"amount":Number,
-	"date":Date,*/
-    "trade":Object,
+    "trade":Object,     /*"OrderType":String,
+	                    "Rate":Number,
+	                    "Quantity":Number,
+	                    "TimeStamp":Date,*/
 	"total":Number
 });
 
@@ -39,13 +38,6 @@ var chart_schema = new mongoose.Schema({
     "volumeAccount": Number 
 });
 
-var currencyPair_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
-                                  "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
-var dBCollection_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
-                                  "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
-var chartCollection_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
-                                     "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
-
 
 var currencyPair_bittrex = new Array("USDT-BTC","USDT-ETH","USDT-XRP","USDT-NXT","USDT-LTC",
 									 "USDT-ETC","USDT-ZEC","USDT-XMR","USDT-DASH","USDT-NEO",
@@ -53,9 +45,6 @@ var currencyPair_bittrex = new Array("USDT-BTC","USDT-ETH","USDT-XRP","USDT-NXT"
 var cpCollection_bittrex = new Array("USDT_BTC", "USDT_ETH","USDT_XRP","USDT_NXT","USDT_LTC",
                                      "USDT_ETC", "USDT_ZEC","USDT_XMR","USDT_DASH","USDT_NEO",
                                      "USDT_ADA", "USDT_XVG","USDT_OMG","USDT_BTG","USDT_BCH"); //BCC==BCH
-var chartCollection_bittrex = new Array("USDT_BTC_Chart", "USDT_ETH_Chart","USDT_XRP_Chart","USDT_NXT_Chart","USDT_LTC_Chart",
-                                        "USDT_ETC_Chart", "USDT_ZEC_Chart","USDT_XMR_Chart","USDT_DASH_Chart","USDT_NEO_Chart",
-                                        "USDT_ADA_Chart", "USDT_XVG_Chart","USDT_OMG_Chart","USDT_BTG_Chart","USDT_BCH_Chart");
 
 
 var USDT_BTC = mongoose.model('USDT_BTC', trade_schema, 'USDT_BTC'); //bitcoin
@@ -155,11 +144,11 @@ cron.schedule('*/1 * * * *', function(){
     var volumeAccount_t;
     
 
-    //console.log(now, start_time, end_time);
+    console.log(now, start_time, end_time);
     for(var i=0;i < currencyPair_bittrex.length;i++)
     {           
         (function(i){
-            db.collection(cpCollection_bittrex[i]).find({Sname:'BIT', 'trade.TimeStamp':{"$gte":start_time,"$lte":end_time}}).toArray(function(err,result)
+            db.collection(cpCollection_bittrex[i]).find({Sname:'BIT', 'trade.TimeStamp':{"$gte":start_time,"$lt":end_time}}).toArray(function(err,result)
             {
                 if(err) throw err;
                 if(result.length>0){
@@ -170,6 +159,8 @@ cron.schedule('*/1 * * * *', function(){
                     low_t = result[0].trade.Rate;
                     volumeRate_t = result[0].trade.Rate;
                     volumeAccount_t = result[0].total;
+                    min_TimeStamp = result[0].trade.TimeStamp;
+                    max_TimeStamp = result[0].trade.TimeStamp;
 
                     for(var j=1;j<result.length;j++)
                     {
@@ -177,11 +168,14 @@ cron.schedule('*/1 * * * *', function(){
                             high_t = result[j].trade.Rate;
                         if(low_t>result[j].trade.Rate)
                             low_t = result[j].trade.Rate;
-                        if(result[j-1].trade.TimeStamp > result[j].trade.TimeStamp)
+                        if(max_TimeStamp <= result[j].trade.TimeStamp){
+                            max_TimeStamp = result[j].trade.TimeStamp;
+                            close_t = result[j].trade.Rate;
+                        }
+                        if(min_TimeStamp >= result[j].trade.TimeStamp){
+                            min_TimeStamp = result[j].trade.TimeStamp;
                             open_t = result[j].trade.Rate;
-                        if(result[result.length-1].trade.TimeStamp < result[j-1].trade.TimeStamp)
-                            close_t = result[j-1].trade.Rate;
-
+                        }
                         volumeRate_t += result[j].trade.Rate;
                         volumeAccount_t += result[j].total;
                     }
@@ -202,10 +196,10 @@ cron.schedule('*/1 * * * *', function(){
                     volumeAccount_t =null;
                 }
 
-                db.collection(chartCollection_bittrex[i]).save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAccount: volumeAccount_t},function(err,res){
+                db.collection(cpCollection_bittrex[i]+"_minutes").save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAccount: volumeAccount_t},function(err,res){
                     if(err) throw err;
                 });
-                //console.log(cpCollection_bittrex[i],result);
+                console.log(cpCollection_bittrex[i],result);
             });  
         })(i);
 
@@ -213,4 +207,73 @@ cron.schedule('*/1 * * * *', function(){
     }
 
 });
+
+cron.schedule('*/60 * * * *', function(){
+    console.log('running a task every a hour!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    var now = new Date().getTime();
+    var start_time = (now-(now%3600000))-3600000;
+    var end_time = start_time+3600000;
+    var Sname_t;
+    var high_t;
+    var low_t;
+    var open_t;
+    var close_t;
+    var volumeRate_t;
+    var volumeAccount_t;
     
+
+    console.log(now, start_time, end_time);
+    for(var i=0;i < cpCollection_bittrex.length;i++)
+    {           
+        (function(i){
+            db.collection(cpCollection_bittrex[i]+"_minutes").find({Sname:'BIT', createTime:{"$gte":start_time,"$lt":end_time}}).toArray(function(err,result)
+            {
+                if(err) throw err;
+                if(result.length>0){
+                    Sname_t = result[0].Sname; 
+                    open_t = result[0].open;
+                    close_t =result[result.length-1].close;
+                    high_t = result[0].high;
+                    low_t = result[0].low;
+                    volumeRate_t = result[0].volumeRate;
+                    volumeAccount_t = result[0].volumeAccount;
+                    //min_TimeStamp = result[0].trade.TimeStamp;
+                    //max_TimeStamp = result[0].trade.TimeStamp;
+
+                    for(var j=1;j<result.length;j++)
+                    {
+                        if(high_t<result[j].high)
+                            high_t = result[j].high;
+                        if(low_t>result[j].low)
+                            low_t = result[j].low;
+                        
+                        volumeRate_t += result[j].volumeRate;
+                        volumeAccount_t += result[j].volumeAccount;
+                    }
+                    /*console.log('open 1Hour ',open_t);
+                    console.log('high 1Hour ',high_t);
+                    console.log('low  1Hour ',low_t);
+                    console.log('close 1Hour ',close_t);
+                    console.log('volumeRate 1Hour ',volumeRate_t);
+                    console.log('volumeAccount 1Hour ',volumeAccount_t);*/
+                }
+                else{
+                    Sname_t = null;
+                    open_t = null;
+                    close_t = null;
+                    high_t = null;
+                    low_t = null;
+                    volumeRate_t = null;
+                    volumeAccount_t =null;
+                }
+
+                db.collection(cpCollection_bittrex[i]+"_hour").save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAccount: volumeAccount_t},function(err,res){
+                    if(err) throw err;
+                });
+                //console.log(chartCollection_bittrex_1H[i],result);
+            });  
+        })(i);
+    }
+});
+
+
