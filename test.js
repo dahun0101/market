@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
 const PoloniexApiPush = require('poloniex-api-push');
-var bittrex = require('node-bittrex-api');
 var cron = require('node-cron');
 	
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
@@ -15,7 +14,6 @@ db.on('error', console.error.bind(console, 'DB connection error:'));
 db.once('open', function callback () {
       console.log("DB connection open");
 });
-
 
 /* DATABASE set up */
 
@@ -41,19 +39,9 @@ var chartdata_schema = new mongoose.Schema({
 
 const poloPush = new PoloniexApiPush();
 
-var site_name = new Array("POL","BIT");
-
-var MARKETSTATUS = new Array("USDT_ADA","USDT_BCH","USDT_BTC","USDT_BTG","USDT_DASH","USDT_ETC",
-						"USDT_ETH","USDT_LTC","USDT_NEO","USDT_NXT","USDT_OMG","USDT_REP","USDT_STR",
-						"USDT_XMR","USDT_XRP","USDT_XVG","USDT_ZEC");
-
-var currencyPair_polo = new Array("","USDT_BCH","USDT_BTC","","USDT_DASH","USDT_ETC",
-						"USDT_ETH","USDT_LTC","","USDT_NXT","","USDT_REP","USDT_STR",
-						"USDT_XMR","USDT_XRP","","USDT_ZEC");
-
-var currencyPair_bit = new Array("USDT-ADA","USDT-BCH","USDT-BTC","USDT-BTG","USDT-DASH","USDT-ETC",
-						"USDT-ETH","USDT-LTC","USDT-NEO","USDT-NXT","USDT-OMG","","",
-						"USDT-XMR","USDT-XRP","USDT-XVG","USDT-ZEC");
+var currencyPair_polo = new Array("USDT_BCH","USDT_BTC","USDT_DASH","USDT_ETC",
+						"USDT_ETH","USDT_LTC","USDT_NXT","USDT_REP","USDT_STR",
+						"USDT_XMR","USDT_XRP","USDT_ZEC");
 
 var USDT_BTC = mongoose.model('USDT_BTC', tradedata_schema, 'USDT_BTC'); //bitcoin
 var USDT_STR = mongoose.model('USDT_STR', tradedata_schema, 'USDT_STR'); //stellar
@@ -67,36 +55,28 @@ var USDT_ZEC = mongoose.model('USDT_ZEC', tradedata_schema, 'USDT_ZEC'); //Zcash
 var USDT_XMR = mongoose.model('USDT_XMR', tradedata_schema, 'USDT_XMR'); //monero
 var USDT_REP = mongoose.model('USDT_REP', tradedata_schema, 'USDT_REP'); //augur
 var USDT_DASH = mongoose.model('USDT_DASH', tradedata_schema, 'USDT_DASH'); //dash
-var USDT_NEO = mongoose.model('USDT_NEO', tradedata_schema, 'USDT_NEO'); //neo
-var USDT_ADA = mongoose.model('USDT_ADA', tradedata_schema, 'USDT_ADA'); //ada
-var USDT_XVG = mongoose.model('USDT_XVG', tradedata_schema, 'USDT_XVG'); //verge
-var USDT_OMG = mongoose.model('USDT_OMG', tradedata_schema, 'USDT_OMG'); //omisego
-var USDT_BTG = mongoose.model('USDT_BTG', tradedata_schema, 'USDT_BTG'); //bitcoin gold
 
-var USDT_BTC_Chart = mongoose.model('USDT_BTC_Chart', chartdata_schema, 'USDT_BTC_Chart'); 
-var USDT_STR_Chart = mongoose.model('USDT_STR_Chart', chartdata_schema, 'USDT_STR_Chart');
-var USDT_ETH_Chart = mongoose.model('USDT_ETH_Chart', chartdata_schema, 'USDT_ETH_Chart'); 
-var USDT_XRP_Chart = mongoose.model('USDT_XRP_Chart', chartdata_schema, 'USDT_XRP_Chart'); 
-var USDT_BCH_Chart = mongoose.model('USDT_BCH_Chart', chartdata_schema, 'USDT_BCH_Chart'); 
-var USDT_NXT_Chart = mongoose.model('USDT_NXT_Chart', chartdata_schema, 'USDT_NXT_Chart'); 
-var USDT_LTC_Chart = mongoose.model('USDT_LTC_Chart', chartdata_schema, 'USDT_LTC_Chart'); 
-var USDT_ETC_Chart = mongoose.model('USDT_ETC_Chart', chartdata_schema, 'USDT_ETC_Chart');
-var USDT_ZEC_Chart = mongoose.model('USDT_ZEC_Chart', chartdata_schema, 'USDT_ZEC_Chart'); 
-var USDT_XMR_Chart = mongoose.model('USDT_XMR_Chart', chartdata_schema, 'USDT_XMR_Chart'); 
-var USDT_REP_Chart = mongoose.model('USDT_REP_Chart', chartdata_schema, 'USDT_REP_Chart'); 
-var USDT_DASH_Chart = mongoose.model('USDT_DASH_Chart', chartdata_schema, 'USDT_DASH_Chart'); 
-var USDT_NEO_Chart = mongoose.model('USDT_NEO_Chart', chartdata_schema, 'USDT_NEO_Chart'); 
-var USDT_ADA_Chart = mongoose.model('USDT_ADA_Chart', chartdata_schema, 'USDT_ADA_Chart');
-var USDT_XVG_Chart = mongoose.model('USDT_XVG_Chart', chartdata_schema, 'USDT_XVG_Chart'); 
-var USDT_OMG_Chart = mongoose.model('USDT_OMG_Chart', chartdata_schema, 'USDT_OMG_Chart'); 
-var USDT_BTG_Chart = mongoose.model('USDT_BTG_Chart', chartdata_schema, 'USDT_BTG_Chart'); 
+var USDT_BTC_Chart = mongoose.model('USDT_BTC_min', chartdata_schema, 'USDT_BTC_Chart'); 
+var USDT_STR_Chart = mongoose.model('USDT_STR_min', chartdata_schema, 'USDT_STR_Chart');
+var USDT_ETH_Chart = mongoose.model('USDT_ETH_min', chartdata_schema, 'USDT_ETH_Chart'); 
+var USDT_XRP_Chart = mongoose.model('USDT_XRP_min', chartdata_schema, 'USDT_XRP_Chart'); 
+var USDT_BCH_Chart = mongoose.model('USDT_BCH_min', chartdata_schema, 'USDT_BCH_Chart'); 
+var USDT_NXT_Chart = mongoose.model('USDT_NXT_min', chartdata_schema, 'USDT_NXT_Chart'); 
+var USDT_LTC_Chart = mongoose.model('USDT_LTC_min', chartdata_schema, 'USDT_LTC_Chart'); 
+var USDT_ETC_Chart = mongoose.model('USDT_ETC_min', chartdata_schema, 'USDT_ETC_Chart');
+var USDT_ZEC_Chart = mongoose.model('USDT_ZEC_min', chartdata_schema, 'USDT_ZEC_Chart'); 
+var USDT_XMR_Chart = mongoose.model('USDT_XMR_min', chartdata_schema, 'USDT_XMR_Chart'); 
+var USDT_REP_Chart = mongoose.model('USDT_REP_min', chartdata_schema, 'USDT_REP_Chart'); 
+var USDT_DASH_Chart = mongoose.model('USDT_DASH_min', chartdata_schema, 'USDT_DASH_Chart'); 
 
-cron.schedule('*/1 * * * *', function(){
+
+cron.schedule('5 */1 * * * *', function(){
 		
-	var currentTime = Math.floor(Date.now()/1000);
+	var currentTime = Math.floor((Date.now()/1000)-5);
 	var pastTime = currentTime - 60;
+	console.log(currentTime+"MIN!!");
 
-	for(var i = 0 ; i < MARKETSTATUS.length ; i++){
+	for(var i = 0 ; i < currencyPair_polo.length ; i++){
 		
 		(function(i){
 		
@@ -107,7 +87,7 @@ cron.schedule('*/1 * * * *', function(){
 		var volumeAMOUNT = 0;
 		var volumeRate = 0;
 
-			db.collection(MARKETSTATUS[i]).find({Sname:'POL',date:{$lt:currentTime,$gte:pastTime}}).toArray(function(err, filter){
+			db.collection(currencyPair_polo[i]).find({Sname:'POL',date:{$lt:currentTime,$gte:pastTime}}).toArray(function(err, filter){
 
 				if (err) throw err;
 				
@@ -136,7 +116,7 @@ cron.schedule('*/1 * * * *', function(){
 					}
 
 				var collectionName = new String;
-				collectionName = MARKETSTATUS[i]+"_chart";
+				collectionName = currencyPair_polo[i]+"_minutes";
 					
 					chartdata_schema = {
 						createTime : pastTime,
@@ -169,25 +149,13 @@ var insertData = function(currencyPair, data, Sname){
 			amount : Number(data.amount),
 			total : (data.rate*data.amount)
 		}
-	}
-	else if(Sname === 'BIT'){
 
-		DATA_SCHEMA = {
-			Sname : Sname,
-			date : data.date,
-			type : data.OrderType,
-			rate : data.Rate,
-			amount : data.Quantity,
-			total : (data.Rate*data.Quantity)
-		}
 	}
-
 		db.collection(currencyPair).save(DATA_SCHEMA, function(err,res){
 		if(err) throw err;
 	});
 	
 }
-
 
 poloPush.init().then(() => {
 
@@ -256,50 +224,3 @@ poloPush.init().then(() => {
     	insertData(currencyPair, trade, Sname);
   	});
 });
-
-
-bittrex.options({
-
-	websockets: {
-	    onConnect: function() {
-
-	    	console.log('Bittrex Websocket connected');
-
-	    	var Sname = "BIT";
-		    
-		    bittrex.websockets.subscribe(currencyPair_bit, function(data) {
-
-		        if (data.M === 'updateExchangeState') {
-		          
-		          	data.A.forEach(function(data_for) {
-
-		          		for(var i = 0; i < data_for.Fills.length; i++){
-		          			
-		          			var obj = data_for.Fills[i];
-		          			var t_time = Math.floor(Date.parse(obj.TimeStamp)/1000)+32400;
-
-			  				obj.date = t_time;
-
-			  				var pair = data_for.MarketName.split("-");
-			  				if(pair[1] === 'BCC'){
-			  					pair[1] = 'BCH';
-			  				}
-			  				var market = pair[0]+"_"+pair[1];
-			
-			  				insertData(market, obj, Sname);
-		          		}
-		         	});
-		        }
-		    });
-	    },
-	    onDisconnect: function() {
-	      console.log('Websocket disconnected');
-	    }
-	}
-});
-
-var websocketClient;
-bittrex.websockets.client(function(client) {
-  websocketClient = client;
-});
-
