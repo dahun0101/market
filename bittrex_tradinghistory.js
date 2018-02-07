@@ -5,8 +5,8 @@ var cron = require('node-cron');
 
 /*-------------------------------------mongodb를 nodejs와 연동한다.--------------------------------------*/
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
-//mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaqoo?ssl=true&authSource=admin');
-mongoose.connect('mongodb://localhost:27017/localbittrex');
+mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaqoo?ssl=true&authSource=admin');
+//mongoose.connect('mongodb://localhost:27017/localbittrex');
 var db = mongoose.connection;
 // we get notified if error occurs
 db.on('error', console.error.bind(console, 'DB connection error:'));
@@ -35,7 +35,7 @@ var chart_schema = new mongoose.Schema({
     "low": Number,
     "close": Number,
     "volumeRate": Number, 
-    "volumeAccount": Number 
+    "volumeAmount": Number 
 });
 
 
@@ -141,7 +141,7 @@ cron.schedule('*/1 * * * *', function(){
     var open_t;
     var close_t;
     var volumeRate_t;
-    var volumeAccount_t;
+    var volumeAmount_t;
     
 
     console.log(now, start_time, end_time);
@@ -158,7 +158,7 @@ cron.schedule('*/1 * * * *', function(){
                     high_t = result[0].trade.Rate;
                     low_t = result[0].trade.Rate;
                     volumeRate_t = result[0].trade.Rate;
-                    volumeAccount_t = result[0].total;
+                    volumeAmount_t = result[0].total;
                     min_TimeStamp = result[0].trade.TimeStamp;
                     max_TimeStamp = result[0].trade.TimeStamp;
 
@@ -177,14 +177,14 @@ cron.schedule('*/1 * * * *', function(){
                             open_t = result[j].trade.Rate;
                         }
                         volumeRate_t += result[j].trade.Rate;
-                        volumeAccount_t += result[j].total;
+                        volumeAmount_t += result[j].total;
                     }
                     /*console.log('open  ',open_t);
                     console.log('high  ',high_t);
                     console.log('low   ',low_t);
                     console.log('close ',close_t);
                     console.log('volumeRate ',volumeRate_t);
-                    console.log('volumeAccount ',volumeAccount_t);*/
+                    console.log('volumeAmount ',volumeAmount_t);*/
                 }
                 else{
                     Sname_t = null;
@@ -193,10 +193,10 @@ cron.schedule('*/1 * * * *', function(){
                     high_t = null;
                     low_t = null;
                     volumeRate_t = null;
-                    volumeAccount_t =null;
+                    volumeAmount_t =null;
                 }
 
-                db.collection(cpCollection_bittrex[i]+"_minutes").save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAccount: volumeAccount_t},function(err,res){
+                db.collection(cpCollection_bittrex[i]+"_minutes").save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAmount: volumeAmount_t},function(err,res){
                     if(err) throw err;
                 });
                 console.log(cpCollection_bittrex[i],result);
@@ -208,8 +208,8 @@ cron.schedule('*/1 * * * *', function(){
 
 });
 
-cron.schedule('*/60 * * * *', function(){
-    console.log('running a task every a hour!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+cron.schedule('*/30 * * * *', function(){
+    console.log('running a task every a hour');
     var now = new Date().getTime();
     var start_time = (now-(now%3600000))-3600000;
     var end_time = start_time+3600000;
@@ -219,7 +219,7 @@ cron.schedule('*/60 * * * *', function(){
     var open_t;
     var close_t;
     var volumeRate_t;
-    var volumeAccount_t;
+    var volumeAmount_t;
     
 
     console.log(now, start_time, end_time);
@@ -236,7 +236,7 @@ cron.schedule('*/60 * * * *', function(){
                     high_t = result[0].high;
                     low_t = result[0].low;
                     volumeRate_t = result[0].volumeRate;
-                    volumeAccount_t = result[0].volumeAccount;
+                    volumeAmount_t = result[0].volumeAmount;
                     //min_TimeStamp = result[0].trade.TimeStamp;
                     //max_TimeStamp = result[0].trade.TimeStamp;
 
@@ -248,14 +248,14 @@ cron.schedule('*/60 * * * *', function(){
                             low_t = result[j].low;
                         
                         volumeRate_t += result[j].volumeRate;
-                        volumeAccount_t += result[j].volumeAccount;
+                        volumeAmount_t += result[j].volumeAmount;
                     }
                     /*console.log('open 1Hour ',open_t);
                     console.log('high 1Hour ',high_t);
                     console.log('low  1Hour ',low_t);
                     console.log('close 1Hour ',close_t);
                     console.log('volumeRate 1Hour ',volumeRate_t);
-                    console.log('volumeAccount 1Hour ',volumeAccount_t);*/
+                    console.log('volumeAmount 1Hour ',volumeAmount_t);*/
                 }
                 else{
                     Sname_t = null;
@@ -264,10 +264,10 @@ cron.schedule('*/60 * * * *', function(){
                     high_t = null;
                     low_t = null;
                     volumeRate_t = null;
-                    volumeAccount_t =null;
+                    volumeAmount_t =null;
                 }
 
-                db.collection(cpCollection_bittrex[i]+"_hour").save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAccount: volumeAccount_t},function(err,res){
+                db.collection(cpCollection_bittrex[i]+"_hour").save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAmount: volumeAmount_t},function(err,res){
                     if(err) throw err;
                 });
                 //console.log(chartCollection_bittrex_1H[i],result);
