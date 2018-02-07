@@ -191,11 +191,11 @@ cron.schedule('*/1 * * * *', function(){
         
     }
 });
-cron.schedule('*/5 * * * *', function(){
+cron.schedule('*/60 * * * *', function(){
     console.log('running a task every a hour');
     var now = new Date().getTime();
-    var start_time = (now-(now%300000))-300000;
-    var end_time = start_time+300000;
+    var start_time = (now-(now%3600000))-3600000;
+    var end_time = start_time+3600000;
     var Sname_t;
     var high_t;
     var low_t;
