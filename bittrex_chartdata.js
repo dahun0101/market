@@ -1,10 +1,10 @@
-var mongoose = require('mongoose');;
+var mongoose = require('mongoose');
+
 var bittrex = require('node-bittrex-api');
 var cron = require('node-cron');
 /*-------------------------------------mongodb를 nodejs와 연동한다.--------------------------------------*/
 // connect to MongoDB / the name of DB is set to 'coinsdaq'
-mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaqoo?ssl=true&authSource=admin');
-//mongoose.connect('mongodb://localhost:27017/localbittrex');
+mongoose.connect('mongodb://coinsdaq:coinsdaq@coinsdaq-shard-00-00-kon04.mongodb.net:27017/coinsdaq?ssl=true&authSource=admin');
 var db = mongoose.connection;
 // we get notified if error occurs
 db.on('error', console.error.bind(console, 'DB connection error:'));
@@ -15,12 +15,12 @@ db.once('open', function callback () {
 });
 /*-----------------------------------------------------------------------------------------------------*/
 var trade_schema = new mongoose.Schema({
-	"Sname": String,
-    "trade":Object,     /*"OrderType":String,
-	                    "Rate":Number,
-	                    "Quantity":Number,
-	                    "TimeStamp":Date,*/
-	"total":Number
+   "Sname": String,
+    "date": Date,
+    "type":String,
+    "rate":Number,
+    "amount": Number,
+   "total":Number
 });
 var chart_schema = new mongoose.Schema({
     "createTime": Date,
@@ -33,11 +33,12 @@ var chart_schema = new mongoose.Schema({
     "volumeAmount": Number 
 });
 var currencyPair_bittrex = new Array("USDT-BTC","USDT-ETH","USDT-XRP","USDT-NXT","USDT-LTC",
-									 "USDT-ETC","USDT-ZEC","USDT-XMR","USDT-DASH","USDT-NEO",
+                            "USDT-ETC","USDT-ZEC","USDT-XMR","USDT-DASH","USDT-NEO",
                                      "USDT-ADA","USDT-XVG","USDT-OMG","USDT-BTG","USDT-BCC");
 var cpCollection_bittrex = new Array("USDT_BTC", "USDT_ETH","USDT_XRP","USDT_NXT","USDT_LTC",
                                      "USDT_ETC", "USDT_ZEC","USDT_XMR","USDT_DASH","USDT_NEO",
                                      "USDT_ADA", "USDT_XVG","USDT_OMG","USDT_BTG","USDT_BCH"); //BCC==BCH
+
 var USDT_BTC = mongoose.model('USDT_BTC', trade_schema, 'USDT_BTC'); //bitcoin
 var USDT_STR = mongoose.model('USDT_STR', trade_schema, 'USDT_STR'); //stellar
 var USDT_ETH = mongoose.model('USDT_ETH', trade_schema, 'USDT_ETH'); //ethereum
@@ -55,6 +56,7 @@ var USDT_ADA = mongoose.model('USDT_ADA', trade_schema, 'USDT_ADA'); //ada
 var USDT_XVG = mongoose.model('USDT_XVG', trade_schema, 'USDT_XVG'); //verge
 var USDT_OMG = mongoose.model('USDT_OMG', trade_schema, 'USDT_OMG'); //omisego
 var USDT_BTG = mongoose.model('USDT_BTG', trade_schema, 'USDT_BTG'); //bitcoin gold
+
 var USDT_BTC_Chart = mongoose.model('USDT_BTC_Chart', chart_schema, 'USDT_BTC_Chart'); 
 var USDT_STR_Chart = mongoose.model('USDT_STR_Chart', chart_schema, 'USDT_STR_Chart'); 
 var USDT_ETH_Chart = mongoose.model('USDT_ETH_Chart', chart_schema, 'USDT_ETH_Chart'); 
@@ -72,6 +74,8 @@ var USDT_ADA_Chart = mongoose.model('USDT_ADA_Chart', chart_schema, 'USDT_ADA_Ch
 var USDT_XVG_Chart = mongoose.model('USDT_XVG_Chart', chart_schema, 'USDT_XVG_Chart'); 
 var USDT_OMG_Chart = mongoose.model('USDT_OMG_Chart', chart_schema, 'USDT_OMG_Chart'); 
 var USDT_BTG_Chart = mongoose.model('USDT_BTG_Chart', chart_schema, 'USDT_BTG_Chart'); 
+
+
 bittrex.options({
   websockets: {
     onConnect: function() {
@@ -92,8 +96,7 @@ bittrex.options({
                     if(t.MarketName === currencyPair_bittrex[j])
                     {
                         trade.TimeStamp = t_time;
-                        console.log(t.MarketName, trade.TimeStamp, typeof(trade.TimeStamp));
-                        db.collection(cpCollection_bittrex[j]).save({Sname:'BIT', trade, total:trade.Rate*trade.Quantity},function(err,res){
+                        db.collection(cpCollection_bittrex[j]).save({Sname:'BIT', date: trade.TimeStamp, type: trade.OrderType, rate: trade.Rate, amount: trade.Quantity, total:trade.Rate*trade.Quantity},function(err,res){
                             if(err) throw err;
                         });
                     }
@@ -109,10 +112,12 @@ bittrex.options({
     }
   }  
 });
+
 var websocketClient;
 bittrex.websockets.client(function(client) {
   websocketClient = client;
 });
+
 /*----------------------------------------------------------------------------------------------------------------*/
 cron.schedule('*/1 * * * *', function(){
     console.log('running a task every a minutes');
@@ -127,38 +132,38 @@ cron.schedule('*/1 * * * *', function(){
     var volumeRate_t;
     var volumeAmount_t;
     
-    console.log(now, start_time, end_time);
+   
     for(var i=0;i < currencyPair_bittrex.length;i++)
     {           
         (function(i){
-            db.collection(cpCollection_bittrex[i]).find({Sname:'BIT', 'trade.TimeStamp':{"$gte":start_time,"$lt":end_time}}).toArray(function(err,result)
+            db.collection(cpCollection_bittrex[i]).find({Sname:'BIT', date:{"$gte":start_time,"$lt":end_time}}).toArray(function(err,result)
             {
                 if(err) throw err;
                 if(result.length>0){
                     Sname_t = result[0].Sname; 
-                    open_t = result[0].trade.Rate;
-                    close_t =result[result.length-1].trade.Rate;
-                    high_t = result[0].trade.Rate;
-                    low_t = result[0].trade.Rate;
-                    volumeRate_t = result[0].trade.Rate;
+                    open_t = result[0].rate;
+                    close_t =result[result.length-1].rate;
+                    high_t = result[0].rate;
+                    low_t = result[0].rate;
+                    volumeRate_t = result[0].rate;
                     volumeAmount_t = result[0].total;
-                    min_TimeStamp = result[0].trade.TimeStamp;
-                    max_TimeStamp = result[0].trade.TimeStamp;
+                    min_TimeStamp = result[0].date;
+                    max_TimeStamp = result[0].date;
                     for(var j=1;j<result.length;j++)
                     {
-                        if(high_t<result[j].trade.Rate)
-                            high_t = result[j].trade.Rate;
-                        if(low_t>result[j].trade.Rate)
-                            low_t = result[j].trade.Rate;
-                        if(max_TimeStamp <= result[j].trade.TimeStamp){
-                            max_TimeStamp = result[j].trade.TimeStamp;
-                            close_t = result[j].trade.Rate;
+                        if(high_t<result[j].rate)
+                            high_t = result[j].rate;
+                        if(low_t>result[j].rate)
+                            low_t = result[j].rate;
+                        if(max_TimeStamp <= result[j].date){
+                            max_TimeStamp = result[j].date;
+                            close_t = result[j].rate;
                         }
-                        if(min_TimeStamp >= result[j].trade.TimeStamp){
-                            min_TimeStamp = result[j].trade.TimeStamp;
-                            open_t = result[j].trade.Rate;
+                        if(min_TimeStamp >= result[j].date){
+                            min_TimeStamp = result[j].date;
+                            open_t = result[j].rate;
                         }
-                        volumeRate_t += result[j].trade.Rate;
+                        volumeRate_t += result[j].rate;
                         volumeAmount_t += result[j].total;
                     }
                 }
@@ -174,13 +179,15 @@ cron.schedule('*/1 * * * *', function(){
                 db.collection(cpCollection_bittrex[i]+"_minutes").save({createTime: start_time, Sname: Sname_t, open: open_t, high: high_t, low: low_t, close: close_t, volumeRate: volumeRate_t, volumeAmount: volumeAmount_t},function(err,res){
                     if(err) throw err;
                 });
-                console.log(cpCollection_bittrex[i],result);
+                
             });  
         })(i);
         
     }
 });
-cron.schedule('*/30 * * * *', function(){
+
+
+cron.schedule('*/60 * * * *', function(){
     console.log('running a task every a hour');
     var now = new Date().getTime();
     var start_time = (now-(now%3600000))-3600000;
@@ -193,7 +200,7 @@ cron.schedule('*/30 * * * *', function(){
     var volumeRate_t;
     var volumeAmount_t;
     
-    console.log(now, start_time, end_time);
+    
     for(var i=0;i < cpCollection_bittrex.length;i++)
     {           
         (function(i){

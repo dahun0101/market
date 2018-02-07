@@ -34,7 +34,7 @@ db.once('open', function callback () {
 		"low" : Number,
 		"close" : Number,
 		"volumeRate" : Number,
-		"volumeAMOUNT" : Number
+		"volumeAmount" : Number
 	});
 
 	const poloPush = new PoloniexApiPush();
@@ -96,7 +96,7 @@ cron.schedule('5 */1 * * * *', function(){
 		var high = 0;
 		var low = 0;
 		var close = 0;
-		var volumeAMOUNT = 0;
+		var volumeAmount = 0;
 		var volumeRate = 0;
 
 			db.collection(currencyPair_polo[i]).find({Sname:'POL',date:{$lt:currentTime,$gte:pastTime}}).toArray(function(err, filter){
@@ -124,7 +124,7 @@ cron.schedule('5 */1 * * * *', function(){
 						close = result.rate;	
 
 						volumeRate += (result.rate*result.amount);
-						volumeAMOUNT += result.amount;
+						volumeAmount += result.amount;
 					}
 
 				var collectionName = new String;
@@ -138,7 +138,7 @@ cron.schedule('5 */1 * * * *', function(){
 						low : low,
 						close : close,
 						volumeRate : volumeRate,
-						volumeAMOUNT : volumeAMOUNT
+						volumeAmount : volumeAmount
 					}	
 				db.collection(collectionName).save(chartdata_schema, function(err,res){
 					if(err) throw err;
@@ -162,7 +162,7 @@ cron.schedule('10 */60 * * * *', function(){
 		var high = 0;
 		var low = 0;
 		var close = 0;
-		var volumeAMOUNT = 0;
+		var volumeAmount = 0;
 		var volumeRate = 0;
 
 			db.collection(currencyPair_polo[i]).find({Sname:'POL',date:{$lt:currentTime,$gte:pastTime}}).toArray(function(err, filter){
@@ -190,7 +190,7 @@ cron.schedule('10 */60 * * * *', function(){
 						close = result.rate;	
 
 						volumeRate += (result.rate*result.amount);
-						volumeAMOUNT += result.amount;
+						volumeAmount += result.amount;
 					}
 
 				var collectionName = new String;
@@ -204,7 +204,7 @@ cron.schedule('10 */60 * * * *', function(){
 						low : low,
 						close : close,
 						volumeRate : volumeRate,
-						volumeAMOUNT : volumeAMOUNT
+						volumeAmount : volumeAmount
 					}	
 				db.collection(collectionName).save(chartdata_schema, function(err,res){
 					if(err) throw err;
