@@ -19,23 +19,40 @@ db.once('open', function callback () {
 /*-----------------------------------------------------------------------------------------------------*/
 var trade_schema = new mongoose.Schema({
 	"Sname": String,
-	"type":String,
+	/*"type":String,
 	"rate":Number,
 	"amount":Number,
-	"date":Date,
+	"date":Date,*/
+  "trade":Object,
 	"total":Number
 });
+var chart_schema = new mongoose.Schema({
+    "createTime": Date,
+    "Sname": String,
+    "open": Number,
+    "high": Number,
+    "low": Number,
+    "close": Number,
+    "volumeRate": Number, 
+    "volumeAccount": Number 
+});
+
 var currencyPair_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
                                   "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
-var dBCollection_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
+var cpCollection_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
                                   "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
+var chartCollection_polo = new Array("USDT_BTC","USDT_STR","USDT_ETH","USDT_XRP","USDT_BCH","USDT_NXT",
+                                     "USDT_LTC","USDT_ETC","USDT_ZEC","USDT_XMR","USDT_REP","USDT_DASH");
 
 var currencyPair_bittrex = new Array("USDT-BTC","USDT-ETH","USDT-XRP","USDT-NXT","USDT-LTC",
                                      "USDT-ETC","USDT-ZEC","USDT-XMR","USDT-DASH","USDT-NEO",
                                      "USDT-ADA","USDT-XVG","USDT-OMG","USDT-BTG","USDT-BCC");
-var dBCollection_bittrex = new Array("USDT_BTC", "USDT_ETH","USDT_XRP","USDT_NXT","USDT_LTC",
+var cpCollection_bittrex = new Array("USDT_BTC", "USDT_ETH","USDT_XRP","USDT_NXT","USDT_LTC",
                                      "USDT_ETC", "USDT_ZEC","USDT_XMR","USDT_DASH","USDT_NEO",
-                                     "USDT_ADA", "USDT_XVG","USDT_OMG","USDT_BTG","USDT_BCC");
+                                     "USDT_ADA", "USDT_XVG","USDT_OMG","USDT_BTG","USDT_BCH");
+var chartCollection_bittrex = new Array("USDT_BTC_Chart", "USDT_ETH_Chart","USDT_XRP_Chart","USDT_NXT_Chart","USDT_LTC_Chart",
+                                        "USDT_ETC_Chart", "USDT_ZEC_Chart","USDT_XMR_Chart","USDT_DASH_Chart","USDT_NEO_Chart",
+                                        "USDT_ADA_Chart", "USDT_XVG_Chart","USDT_OMG_Chart","USDT_BTG_Chart","USDT_BCH_Chart");
 
 
 var USDT_BTC = mongoose.model('USDT_BTC', trade_schema, 'USDT_BTC'); //bitcoin
@@ -56,6 +73,23 @@ var USDT_XVG = mongoose.model('USDT_XVG', trade_schema, 'USDT_XVG'); //verge
 var USDT_OMG = mongoose.model('USDT_OMG', trade_schema, 'USDT_OMG'); //omisego
 var USDT_BTG = mongoose.model('USDT_BTG', trade_schema, 'USDT_BTG'); //bitcoin gold
 
+var USDT_BTC_Chart = mongoose.model('USDT_BTC_Chart', chart_schema, 'USDT_BTC_Chart'); 
+var USDT_STR_Chart = mongoose.model('USDT_STR_Chart', chart_schema, 'USDT_STR_Chart'); 
+var USDT_ETH_Chart = mongoose.model('USDT_ETH_Chart', chart_schema, 'USDT_ETH_Chart'); 
+var USDT_XRP_Chart = mongoose.model('USDT_XRP_Chart', chart_schema, 'USDT_XRP_Chart'); 
+var USDT_BCH_Chart = mongoose.model('USDT_BCH_Chart', chart_schema, 'USDT_BCH_Chart'); 
+var USDT_NXT_Chart = mongoose.model('USDT_NXT_Chart', chart_schema, 'USDT_NXT_Chart'); 
+var USDT_LTC_Chart = mongoose.model('USDT_LTC_Chart', chart_schema, 'USDT_LTC_Chart'); 
+var USDT_ETC_Chart = mongoose.model('USDT_ETC_Chart', chart_schema, 'USDT_ETC_Chart'); 
+var USDT_ZEC_Chart = mongoose.model('USDT_ZEC_Chart', chart_schema, 'USDT_ZEC_Chart'); 
+var USDT_XMR_Chart = mongoose.model('USDT_XMR_Chart', chart_schema, 'USDT_XMR_Chart'); 
+var USDT_REP_Chart = mongoose.model('USDT_REP_Chart', chart_schema, 'USDT_REP_Chart'); 
+var USDT_DASH_Chart = mongoose.model('USDT_DASH_Chart', chart_schema, 'USDT_DASH_Chart'); 
+var USDT_NEO_Chart = mongoose.model('USDT_NEO_Chart', chart_schema, 'USDT_NEO_Chart'); 
+var USDT_ADA_Chart = mongoose.model('USDT_ADA_Chart', chart_schema, 'USDT_ADA_Chart'); 
+var USDT_XVG_Chart = mongoose.model('USDT_XVG_Chart', chart_schema, 'USDT_XVG_Chart'); 
+var USDT_OMG_Chart = mongoose.model('USDT_OMG_Chart', chart_schema, 'USDT_OMG_Chart'); 
+var USDT_BTG_Chart = mongoose.model('USDT_BTG_Chart', chart_schema, 'USDT_BTG_Chart'); 
 
 
 const poloPush = new PoloniexApiPush();
@@ -163,3 +197,4 @@ poloPush.init().then(() => {
    		console.log('USDT_DASH-trade',  trade.type, trade.rate, trade.amount,trade.date, trade.rate*trade.amount);
   	});
 });
+
